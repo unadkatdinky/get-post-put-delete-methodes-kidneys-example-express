@@ -1,34 +1,76 @@
-//const express = require("express");
-//this is brought to device from iternet via npm install express
-const express = require('express')
-const app = express()
-const port = 3000
-//similar to fs. 
+const express = require('express');
+const app = express();
 
-app.get("/route-handler", function(req, res) {
+var user = {
+    name: "dinky",
+    kidneys: [{
+        healthy: false,
+    }]
+};
+
+const users = [user];
+
+app.use(express.json());
+
+app.get("/", function(req, res) {
+    const johnKidneys = users[0].kidneys;
+    const numberOfKidneys = johnKidneys.length;
+    let numberOfHealthyKidneys = 0;
+    for (let i = 0; i < johnKidneys.length; i++) {
+        if (johnKidneys[i].healthy) {
+            numberOfHealthyKidneys++;
+        }
+    }
+    const numberOfUnhealthyKidneys = numberOfKidneys - numberOfHealthyKidneys;
     res.json({
-        name: "harkirat", 
-        age: 21
-    })
-})
-//we need ports to run different servers and requests.
-//http 1, 2, 3 differences are that protocols get better
-//you can use http and rest api interchangeably
+        numberOfKidneys,
+        numberOfHealthyKidneys,
+        numberOfUnhealthyKidneys
+    });
+});
 
-app.get('/', function (req, res) {
-  res.send('Hello World!')
-})
+app.post("/", function(req, res) {
+    const isHealthy = req.body.isHealthy;
+    users[0].kidneys.push({
+        healthy: isHealthy
+    });
+    res.json({
+        msg: "Done!"
+    });
+});
 
-app.get('/hi-there', function (req, res) {
-    res.send('<b>hi there</b>');
-})
+app.put("/", function(req, res) {
+    for (let i = 0; i < users[0].kidneys.length; i++) {
+        users[0].kidneys[i].healthy = true;
+    }
+    res.json({});
+    //updates all kidneys to be healthy.
+});
 
-app.post('/conversations', function (req, res) {
-    console.log(req.headers)
-    res.send('<b>hi there</b>');
-})
+app.delete("/", function(req, res) {
+    //it should give error 411 if no unhealthy kidneys
+    let atLeastOneUnhealthyKidney = false;
+    for (let i = 0; i < users[0].kidneys.length; i++) {
+        if (!users[0].kidneys[i].healthy) {
+            atLeastOneUnhealthyKidney = true;
+            break; // Added break statement to exit loop when unhealthy kidney found
+        }
+    }
+    if (!atLeastOneUnhealthyKidney) {
+        res.status(411).json({ error: "No unhealthy kidneys found." }); // Added error status and message
+        return; // Added return to exit the function
+    }
 
+    const newKidneys = [];
+    for (let i = 0; i < users[0].kidneys.length; i++) {
+        if (users[0].kidneys[i].healthy) {
+            newKidneys.push({
+                healthy: true
+            });
+        }
+    }
+    users[0].kidneys = newKidneys;
+    res.json({});
+});
 
-//for gpt app.post('/backend-api/conversation' would be the function
-app.listen(port)
-//node js also gives http module to create an http server
+app.listen(3002);
